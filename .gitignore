@@ -1,0 +1,22 @@
+# Fichiers générés par Visual Studio (Cache, configuration locale)
+.vs/
+out/
+build/
+x64/
+*.user
+*.suo
+*.opensdf
+*.sdf
+
+# Fichiers générés par CMake (Système de build)
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+
+# Fichiers générés par Qt
+*_autogen/
+
+# Exécutables
+*.exe
+*.dll
