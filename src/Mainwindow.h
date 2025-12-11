@@ -1,15 +1,34 @@
 #pragma once
 #include <QMainWindow>
 #include <QPushButton>
-#include <raylib.h>
+#include <QSlider>
+#include <QLabel>
+#include <QVBoxLayout>
 
 class MainWindow : public QMainWindow {
-    Q_OBJECT // Macro obligatoire pour que Qt fonctionne
-
+    Q_OBJECT
 public:
     explicit MainWindow(QWidget* parent = nullptr);
     ~MainWindow();
 
+    // Accesseurs pour récupérer les valeurs depuis le main.cpp
+    int getParticleCount() const;
+    float getGravity() const;
+    bool isSimulationRunning() const;
+
 private:
-    QPushButton* m_boutonTest; // Un simple bouton pour l'exemple
+    // Widgets
+    QPushButton* m_btnPlayPause;
+    QPushButton* m_btnReset;
+    QSlider* m_sliderGravity;
+    QSlider* m_sliderCount;
+    QLabel* m_lblGravity;
+    QLabel* m_lblCount;
+
+    // État
+    bool m_isRunning = false;
+
+private slots:
+    void onPlayPauseClicked();
+    void onGravityChanged(int value);
 };

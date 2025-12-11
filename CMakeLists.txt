@@ -23,7 +23,8 @@ set(PROJECT_SOURCES
     src/main.cpp
     src/MainWindow.cpp
     src/MainWindow.h
-)
+    src/RaylibWidget.cpp
+    src/RaylibWidget.h)
 
 # --- 4. Création de l'exécutable ---
 set(CMAKE_AUTOMOC ON)
@@ -31,7 +32,7 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
 
-add_executable(${PROJECT_NAME} ${PROJECT_SOURCES})
+add_executable(${PROJECT_NAME} ${PROJECT_SOURCES} "src/RaylibWidget.cpp")
 
 target_link_libraries(${PROJECT_NAME} PRIVATE 
     Qt6::Widgets 
