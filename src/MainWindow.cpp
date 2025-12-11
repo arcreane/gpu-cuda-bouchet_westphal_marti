@@ -25,27 +25,32 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     QPushButton* btnPlay = new QPushButton("Play / Pause", this);
     QPushButton* btnReset = new QPushButton("Reset", this);
 
+        // Ajout des boutons play et reset au layout
     laySim->addWidget(btnPlay);
     laySim->addWidget(btnReset);
 
     controlsLayout->addWidget(grpSim); // On l'ajoute en premier
 
-    // 2. Groupe Physique (Gravité)
+    // 2. Groupe Physique
     QGroupBox* grpPhys = new QGroupBox("Physique", this);
     QVBoxLayout* layPhys = new QVBoxLayout(grpPhys);
 
-    m_lblGravity = new QLabel("Gravity: 9.8", this);
+	    //slider Gravité
+    m_lblGravity = new QLabel("Gravity: 9.81", this);
     m_sliderGravity = new QSlider(Qt::Horizontal, this);
-    m_sliderGravity->setRange(0, 200);
-    m_sliderGravity->setValue(98);
-
+	// Mapper un slider de 0 à 2500 pour représenter 0.00 à 25.00
+    m_sliderGravity->setRange(0, 2500);
+	// Valeur de départ à 9.81 = gravité terrestre
+    m_sliderGravity->setValue(981);
+        
+	    // Ajout des contrôles de physique au layout
     layPhys->addWidget(m_lblGravity);
     layPhys->addWidget(m_sliderGravity);
 
     controlsLayout->addWidget(grpPhys); // On l'ajoute en second
     controlsLayout->addStretch();
 
-    // --- Colonne de Droite : Rendu Raylib ---
+    // --- Fenêtre de rendu Raylib ---
     m_renderWidget = new RaylibWidget(this);
 
     mainLayout->addWidget(controlsWidget);
@@ -69,8 +74,9 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
 
 MainWindow::~MainWindow() {}
 
+// Slot appelé lorsque le slider de gravité change
 void MainWindow::onGravityChanged(int value) {
-    float g = value / 10.0f;
-    m_lblGravity->setText(QString("Gravity: %1").arg(g));
+    float g = value / 100.0f;
+    m_lblGravity->setText(QString("Gravity: %1").arg(g, 0, 'f', 2));
     if (m_renderWidget) m_renderWidget->setGravity(g);
 }
