@@ -1,68 +1,94 @@
 #include "RaylibWidget.h"
-#include <QResizeEvent>
+#include <random>
 
 RaylibWidget::RaylibWidget(QWidget* parent) : QWidget(parent) {
-    // On demande à Qt de nous laisser dessiner nous-mêmes
     setAttribute(Qt::WA_PaintOnScreen);
     setAttribute(Qt::WA_OpaquePaintEvent);
     setAttribute(Qt::WA_NoSystemBackground);
-
-    // On force le focus pour capter le clavier plus tard
     setFocusPolicy(Qt::StrongFocus);
 }
 
 RaylibWidget::~RaylibWidget() {
-    if (m_isInitialized) {
-        CloseWindow();
-    }
+    if (m_isInitialized) CloseWindow();
+}
+
+// --- Nouvelles Méthodes ---
+void RaylibWidget::togglePause() {
+    m_isPaused = !m_isPaused;
+}
+
+void RaylibWidget::reset() {
+    initParticles();
+}
+// --------------------------
+
+void RaylibWidget::setGravity(float g) {
+    m_gravity = g;
 }
 
 void RaylibWidget::initRaylib() {
-    // L'astuce magique : On initialise Raylib sur la fenêtre native de ce Widget
-    // (WId est le handle fenêtre Windows/Linux)
     InitWindow(width(), height(), "");
-
-    // IMPORTANT : Sur certaines versions de Raylib/Qt, il faut attacher le contexte
-    // Ici on fait simple pour commencer : InitWindow crée un contexte OpenGL.
-    // Dans une intégration avancée, on utiliserait le handle winId().
-
-    SetTargetFPS(60);
     m_isInitialized = true;
+    initParticles();
+}
+
+void RaylibWidget::initParticles() {
+    m_particles.clear();
+    for (int i = 0; i < PARTICLE_COUNT; i++) {
+        Particle p;
+        p.position = { (float)GetRandomValue(0, width()), (float)GetRandomValue(0, height()) };
+        p.velocity = { (float)GetRandomValue(-100, 100) / 10.0f, (float)GetRandomValue(-100, 100) / 10.0f };
+        p.radius = 3.0f;
+        p.color = { (unsigned char)GetRandomValue(50, 255), (unsigned char)GetRandomValue(50, 255), 255, 255 };
+        m_particles.push_back(p);
+    }
+}
+
+void RaylibWidget::updatePhysics() {
+    // Si en pause, on ne met pas à jour la physique
+    if (m_isPaused) return;
+
+    float dt = 1.0f / 60.0f;
+
+    for (auto& p : m_particles) {
+        p.velocity.y += m_gravity * dt * 10.0f;
+        p.position.x += p.velocity.x;
+        p.position.y += p.velocity.y;
+
+        // Collisions
+        if (p.position.y > height() - p.radius) {
+            p.position.y = height() - p.radius;
+            p.velocity.y *= -0.8f;
+        }
+        if (p.position.y < p.radius) {
+            p.position.y = p.radius;
+            p.velocity.y *= -0.8f;
+        }
+        if (p.position.x > width() - p.radius || p.position.x < p.radius) {
+            p.velocity.x *= -0.8f;
+            if (p.position.x > width() - p.radius) p.position.x = width() - p.radius;
+            if (p.position.x < p.radius) p.position.x = p.radius;
+        }
+    }
+}
+
+void RaylibWidget::draw() {
+    BeginDrawing();
+    ClearBackground({ 20, 20, 30, 255 });
+
+    for (const auto& p : m_particles) {
+        DrawCircleV(p.position, p.radius, p.color);
+    }
+
+    DrawFPS(10, 10);
+    if (m_isPaused) DrawText("PAUSE", width() / 2 - 50, height() / 2, 40, RAYWHITE);
+
+    EndDrawing();
 }
 
 void RaylibWidget::paintEvent(QPaintEvent*) {
-    if (!m_isInitialized) {
-        // On initialise Raylib seulement quand la fenêtre est visible à l'écran
-        // InitWindow(width(), height(), "Raylib View"); // Version standard
-        // Pour l'intégration, on va feinter : on initialise une fois.
-
-        // NOTE : L'intégration parfaite Raylib-in-Qt est complexe.
-        // Pour ce projet étudiant, on va souvent ouvrir une fenêtre Raylib "enfant" 
-        // ou simplement synchroniser les positions.
-
-        // Approche simplifiée recommandée pour ce TP :
-        // On ne va PAS embedder Raylib *dans* le widget pixel-perfect tout de suite 
-        // car cela demande de recompiler Raylib.
-        // On va lancer la fenêtre Raylib et la coller à côté ou gérer la boucle.
-
-        // Mais essayons l'initialisation standard :
-        InitWindow(800, 600, "Rendu Particules");
-        SetTargetFPS(60);
-        m_isInitialized = true;
-    }
-
-    // Boucle de rendu Raylib (Une frame)
-    if (m_isInitialized && !WindowShouldClose()) {
-        BeginDrawing();
-        ClearBackground(RAYWHITE);
-
-        DrawText("Rendu Raylib Hybride", 10, 10, 20, DARKGRAY);
-        DrawCircle(width() / 2, height() / 2, 50, MAROON);
-        DrawFPS(10, 40);
-
-        EndDrawing();
-    }
-
-    // On force Qt à redessiner en boucle pour animer (comme une game loop)
+    if (!m_isInitialized) initRaylib();
+    updatePhysics();
+    draw();
     update();
 }
