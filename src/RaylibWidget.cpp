@@ -48,7 +48,7 @@ void RaylibWidget::setGravity(float g) {
 
 void RaylibWidget::initParticles() {
     m_particles.clear();
-    for (int i = 0; i < PARTICLE_COUNT; i++) {
+    for (int i = 0; i < m_targetCount; i++) {
         Particle p;
 
 		//Position aléatoire dans la fenêtre
@@ -115,6 +115,7 @@ void RaylibWidget::updatePhysics() {
 
     // --- B. BOUCLE DE COLLISION INTER-PARTICULES (Naïve O(N^2)) ---
     // Note : C'est très lourd pour le CPU. C'est là que CUDA brillera plus tard.
+	if (m_particles.size() > 2000) return; // On évite de faire ça si trop de particules
     for (size_t i = 0; i < m_particles.size(); i++) {
         for (size_t j = i + 1; j < m_particles.size(); j++) {
             Particle& p1 = m_particles[i];
@@ -236,14 +237,55 @@ void RaylibWidget::resizeEvent(QResizeEvent* event) {
     }
 }
 
+// Taille particule
+void RaylibWidget::setParticleSize(float s) {
+    m_particleRadius = s;
+    // Mise à jour immédiate de toutes les particules existantes
+    for (auto& p : m_particles) {
+        p.radius = m_particleRadius;
+    }
+}
+
+void RaylibWidget::setParticleCount(int count) {
+    m_targetCount = count; // On sauvegarde pour le prochain Reset
+
+    int currentSize = m_particles.size();
+
+    if (count < currentSize) {
+        // Cas facile : on en veut moins, on coupe la fin du tableau
+        m_particles.resize(count);
+    }
+    else if (count > currentSize) {
+        // Cas complexe : on en veut plus, il faut créer les nouvelles
+        // On rajoute la différence
+        for (int i = 0; i < (count - currentSize); i++) {
+            Particle p;
+            p.position = { (float)GetRandomValue(0, width()), (float)GetRandomValue(0, height()) };
+
+            float vx = (float)GetRandomValue(-100, 100) / 10.0f;
+            float vy = (float)GetRandomValue(-100, 100) / 10.0f;
+            p.velocity = { vx * m_velocityScale, vy * m_velocityScale };
+
+            // On utilise le rayon actuel stocké
+            p.radius = m_particleRadius;
+            p.color = { (unsigned char)GetRandomValue(50, 255), (unsigned char)GetRandomValue(50, 255), 255, 255 };
+
+            m_particles.push_back(p);
+        }
+    }
+}
+
+// Friction
 void RaylibWidget::setFriction(float f) {
     m_friction = f;
 }
 
+// Rebond
 void RaylibWidget::setrebond(float r) {
     m_rebond = r;
 }
 
+// vitesse initiale
 void RaylibWidget::setInitialVelocityScale(float v) {
     if (m_velocityScale <= 0.0001f) {
         m_velocityScale = v;

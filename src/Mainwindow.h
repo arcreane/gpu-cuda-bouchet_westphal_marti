@@ -32,4 +32,12 @@ private:
     // Vitesse Initiale
     QSlider* m_sliderSpeed;
     QLabel* m_lblSpeed;
+
+    // Taille des particules
+    QSlider* m_sliderSize;
+    QLabel* m_lblSize;
+
+    // Nombre de particules
+    QSlider* m_sliderCount;
+    QLabel* m_lblCount;
 };

@@ -20,6 +20,8 @@ public:
     void setFriction(float f);
     void setrebond(float r);
     void setInitialVelocityScale(float v);
+    void setParticleSize(float s);
+    void setParticleCount(int count);
 
 	
 
@@ -45,7 +47,8 @@ private:
     float m_friction = 0.05f;
     float m_rebond = 0.7f;   
     float m_velocityScale = 1.0f;
-    const int PARTICLE_COUNT = 1000;
+    float m_particleRadius = 3.0f;
+    int m_targetCount = 1000;
 
     // Variables calcul FPS
     std::chrono::steady_clock::time_point m_lastTime;

@@ -32,9 +32,26 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     controlsLayout->addWidget(grpSim); // On l'ajoute en premier
 
     // 2. Groupe Physique
-    QGroupBox* grpPhys = new QGroupBox("Physique", this);
+    QGroupBox* grpPhys = new QGroupBox("Physique and parameters", this);
     QVBoxLayout* layPhys = new QVBoxLayout(grpPhys);
 
+        // -- Nombre de particules (0 à 10000) --
+    m_lblCount = new QLabel("Count: 1000", this);
+    m_sliderCount = new QSlider(Qt::Horizontal, this);
+    m_sliderCount->setRange(0, 10000);
+    m_sliderCount->setValue(1000);
+    layPhys->addWidget(m_lblCount);
+    layPhys->addWidget(m_sliderCount);
+
+        // -- Taille (1.0 à 10.0) --
+    m_lblSize = new QLabel("Size: 3.0", this);
+    m_sliderSize = new QSlider(Qt::Horizontal, this);
+    m_sliderSize->setRange(10, 100);
+    m_sliderSize->setValue(30);
+    layPhys->addWidget(m_lblSize);
+    layPhys->addWidget(m_sliderSize);
+
+	    // -- Gravité --
 	    //slider Gravité
     m_lblGravity = new QLabel("Gravity: 9.81", this);
     m_sliderGravity = new QSlider(Qt::Horizontal, this);
@@ -47,7 +64,7 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     layPhys->addWidget(m_lblGravity);
     layPhys->addWidget(m_sliderGravity);
 
-    // -- Viscosité (Friction) --
+        // -- Viscosité (Friction) --
         // Echelle 0-100 pour représenter 0.00 à 1.00
     m_lblFriction = new QLabel("Viscosity : 0.05", this);
     m_sliderFriction = new QSlider(Qt::Horizontal, this);
@@ -56,7 +73,7 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     layPhys->addWidget(m_lblFriction);
     layPhys->addWidget(m_sliderFriction);
 
-    // -- rebond (Rebond) --
+        // -- rebond (Rebond) --
         // Echelle 0-100 pour 0.0 à 1.0
     m_lblrebond = new QLabel("Bounciness : 0.70", this);
     m_sliderrebond = new QSlider(Qt::Horizontal, this);
@@ -65,7 +82,7 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     layPhys->addWidget(m_lblrebond);
     layPhys->addWidget(m_sliderrebond);
 
-    // -- Vitesse Initiale --
+        // -- Vitesse Initiale --
         // Echelle 0-200% (Multiplicateur)
     m_lblSpeed = new QLabel("Initial speed: 100%", this);
     m_sliderSpeed = new QSlider(Qt::Horizontal, this);
@@ -119,6 +136,19 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
 
         // Slider Gravité
     connect(m_sliderGravity, &QSlider::valueChanged, this, &MainWindow::onGravityChanged);
+
+        // Taille
+    connect(m_sliderSize, &QSlider::valueChanged, this, [this](int val) {
+        float s = val / 10.0f;
+        m_lblSize->setText(QString("Size: %1").arg(s, 0, 'f', 1));
+        if (m_renderWidget) m_renderWidget->setParticleSize(s);
+        });
+
+        // Nombre
+    connect(m_sliderCount, &QSlider::valueChanged, this, [this](int val) {
+        m_lblCount->setText(QString("Count: %1").arg(val));
+        if (m_renderWidget) m_renderWidget->setParticleCount(val);
+        });
 }
 
 MainWindow::~MainWindow() {}
