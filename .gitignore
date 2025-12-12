@@ -20,3 +20,6 @@ Makefile
 # Exécutables
 *.exe
 *.dll
+
+#CMakeUserPreset
+CMakeUserPresets.json
