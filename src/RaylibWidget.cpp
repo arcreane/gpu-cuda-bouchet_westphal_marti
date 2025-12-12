@@ -1,35 +1,49 @@
 #include "RaylibWidget.h"
+#include <QPainter>
+#include <QImage>
 #include <random>
+#include <QResizeEvent>
 
 RaylibWidget::RaylibWidget(QWidget* parent) : QWidget(parent) {
-    setAttribute(Qt::WA_PaintOnScreen);
+    // Optimisation : On indique à Qt qu'on dessine tout le fond nous-mêmes
     setAttribute(Qt::WA_OpaquePaintEvent);
-    setAttribute(Qt::WA_NoSystemBackground);
     setFocusPolicy(Qt::StrongFocus);
+    setMouseTracking(true); // Utile pour tes futures interactions souris
 }
 
 RaylibWidget::~RaylibWidget() {
-    if (m_isInitialized) CloseWindow();
+    if (m_isInitialized) {
+        // Nettoyage propre des ressources Raylib
+        UnloadRenderTexture(m_renderTexture);
+        CloseWindow();
+    }
 }
 
-// --- Nouvelles Méthodes ---
-void RaylibWidget::togglePause() {
-    m_isPaused = !m_isPaused;
+void RaylibWidget::initRaylib() {
+    // 1. Configuration de Raylib en mode "Caché"
+    // Raylib sert de moteur de calcul graphique, pas de fenêtre
+    SetConfigFlags(FLAG_WINDOW_HIDDEN);
+
+    // On doit initialiser une fenêtre pour avoir le contexte OpenGL
+    InitWindow(width(), height(), "Raylib Renderer");
+
+    // 2. Création du Framebuffer (Texture) à la taille du Widget
+    m_renderTexture = LoadRenderTexture(width(), height());
+
+    m_isInitialized = true;
+    initParticles();
 }
 
 void RaylibWidget::reset() {
     initParticles();
 }
-// --------------------------
+
+void RaylibWidget::togglePause() {
+    m_isPaused = !m_isPaused;
+}
 
 void RaylibWidget::setGravity(float g) {
     m_gravity = g;
-}
-
-void RaylibWidget::initRaylib() {
-    InitWindow(width(), height(), "");
-    m_isInitialized = true;
-    initParticles();
 }
 
 void RaylibWidget::initParticles() {
@@ -55,40 +69,87 @@ void RaylibWidget::updatePhysics() {
         p.position.x += p.velocity.x;
         p.position.y += p.velocity.y;
 
-        // Collisions
+        // --- Gestion des Collisions (Murs) ---
+        // Bas
         if (p.position.y > height() - p.radius) {
             p.position.y = height() - p.radius;
             p.velocity.y *= -0.8f;
         }
+        // Haut
         if (p.position.y < p.radius) {
             p.position.y = p.radius;
             p.velocity.y *= -0.8f;
         }
+        // Gauche / Droite
         if (p.position.x > width() - p.radius || p.position.x < p.radius) {
             p.velocity.x *= -0.8f;
+            // Correction de position pour éviter que la particule colle au mur
             if (p.position.x > width() - p.radius) p.position.x = width() - p.radius;
             if (p.position.x < p.radius) p.position.x = p.radius;
         }
     }
 }
 
-void RaylibWidget::draw() {
-    BeginDrawing();
+void RaylibWidget::drawToTexture() {
+    BeginTextureMode(m_renderTexture);
+
     ClearBackground({ 20, 20, 30, 255 });
 
     for (const auto& p : m_particles) {
         DrawCircleV(p.position, p.radius, p.color);
     }
 
-    DrawFPS(10, 10);
-    if (m_isPaused) DrawText("PAUSE", width() / 2 - 50, height() / 2, 40, RAYWHITE);
+    // --- CORRECTION FPS ---
+    // On affiche notre variable calculée manuellement
+    // FormatText est une fonction Raylib pratique (ou TextFormat selon la version)
+    DrawText(TextFormat("%i FPS", m_currentFPS), 10, 10, 20, GREEN);
 
-    EndDrawing();
+    if (m_isPaused) {
+        DrawText("PAUSE", width() / 2 - 50, height() / 2, 40, RAYWHITE);
+    }
+
+    EndTextureMode();
 }
 
 void RaylibWidget::paintEvent(QPaintEvent*) {
-    if (!m_isInitialized) initRaylib();
+    if (!m_isInitialized) {
+        initRaylib();
+        m_lastTime = std::chrono::steady_clock::now(); // Initialiser le chrono
+    }
+
+    // --- CALCUL FPS ---
+    auto currentTime = std::chrono::steady_clock::now();
+    // Calcul de la différence en millisecondes
+    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - m_lastTime).count();
+
+    // Si au moins 1ms est passée (pour éviter la division par zéro)
+    if (elapsed > 0) {
+        m_currentFPS = 1000 / elapsed; // 1000ms / temps écoulé = Images par seconde
+        m_lastTime = currentTime;
+    }
+    // ------------------
+
     updatePhysics();
-    draw();
+    drawToTexture();
+
+    Image image = LoadImageFromTexture(m_renderTexture.texture);
+    QImage qimg((uchar*)image.data, image.width, image.height, QImage::Format_RGBA8888);
+    QImage displayedImage = qimg.mirrored();
+
+    QPainter painter(this);
+    painter.drawImage(0, 0, displayedImage);
+
+    UnloadImage(image);
     update();
+}
+
+void RaylibWidget::resizeEvent(QResizeEvent* event) {
+    // On appelle l'implémentation de base de Qt
+    QWidget::resizeEvent(event);
+
+    // Si Raylib est prêt, on recrée la texture à la nouvelle taille
+    if (m_isInitialized) {
+        UnloadRenderTexture(m_renderTexture);
+        m_renderTexture = LoadRenderTexture(width(), height());
+    }
 }
