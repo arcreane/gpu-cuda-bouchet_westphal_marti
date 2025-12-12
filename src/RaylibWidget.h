@@ -8,12 +8,19 @@
 class RaylibWidget : public QWidget {
     Q_OBJECT
 public:
+	//selecteur CPU / GPU
+    enum ComputeMode {      
+        CPU,
+        GPU};
+	// Constructeur / Destructeur
     explicit RaylibWidget(QWidget* parent = nullptr);
     ~RaylibWidget();
+
 
     // Commande simulation
     void togglePause();
     void reset();
+    void setComputeMode(ComputeMode mode);
 
     // Physique
     void setGravity(float g);
@@ -38,6 +45,9 @@ private:
 
     bool m_isInitialized = false;
     bool m_isPaused = false;
+
+	//variable mode CPU / GPU
+    ComputeMode m_computeMode = CPU;
 
     RenderTexture2D m_renderTexture;
     std::vector<Particle> m_particles;

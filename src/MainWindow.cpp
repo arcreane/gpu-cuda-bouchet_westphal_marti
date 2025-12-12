@@ -2,7 +2,8 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QGroupBox>
-#include <QPushButton> // <--- Ne pas oublier
+#include <QPushButton>
+#include <QComboBox>
 
 MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     setWindowTitle("Simulateur Hybride (Qt + Raylib)");
@@ -18,16 +19,23 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     controlsWidget->setFixedWidth(300);
     QVBoxLayout* controlsLayout = new QVBoxLayout(controlsWidget);
 
-    // 1. Groupe Simulation (Play/Reset) - EN HAUT
+    // Groupe Simulation
     QGroupBox* grpSim = new QGroupBox("Simulation", this);
     QVBoxLayout* laySim = new QVBoxLayout(grpSim);
 
+	    // Boutons Play et Reset
     QPushButton* btnPlay = new QPushButton("Play / Pause", this);
     QPushButton* btnReset = new QPushButton("Reset", this);
+
+	    // ComboBox pour le mode de calcul (CPU/GPU)
+    m_comboComputeMode = new QComboBox(this);
+    m_comboComputeMode->addItem("CPU");
+    m_comboComputeMode->addItem("GPU (CUDA)");
 
         // Ajout des boutons play et reset au layout
     laySim->addWidget(btnPlay);
     laySim->addWidget(btnReset);
+	laySim->addWidget(m_comboComputeMode);
 
     controlsLayout->addWidget(grpSim); // On l'ajoute en premier
 
@@ -100,7 +108,10 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     mainLayout->addWidget(controlsWidget);
     mainLayout->addWidget(m_renderWidget);
 
-    // --- Connexions ---
+
+    //------------------------------------------------------
+    //                      Connexions
+    //------------------------------------------------------
 
         // Bouton Play/Pause
     connect(btnPlay, &QPushButton::clicked, this, [this]() {
@@ -110,6 +121,17 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
         // Bouton Reset
     connect(btnReset, &QPushButton::clicked, this, [this]() {
         if (m_renderWidget) m_renderWidget->reset();
+        });
+
+	    // ComboBox Mode de calcul CPU / GPU (Lambda)
+    connect(m_comboComputeMode, &QComboBox::currentIndexChanged, this, [this](int index) {
+        if (m_renderWidget) {
+            // Index 0 = CPU, Index 1 = GPU
+            RaylibWidget::ComputeMode mode = (index == 0)
+                ? RaylibWidget::CPU
+                : RaylibWidget::GPU;
+            m_renderWidget->setComputeMode(mode);
+        }
         });
 
         // Viscosité (Lambda)

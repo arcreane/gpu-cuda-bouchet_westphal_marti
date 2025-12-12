@@ -4,6 +4,7 @@
 #include <QSlider>
 #include <QLabel>
 #include "RaylibWidget.h"
+#include <QComboBox>
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -16,6 +17,9 @@ private slots:
 
 private:
     RaylibWidget* m_renderWidget;
+
+	// Mode de calcul CPU / GPU
+    QComboBox* m_comboComputeMode;
 
 	// Gravité
     QSlider* m_sliderGravity;
