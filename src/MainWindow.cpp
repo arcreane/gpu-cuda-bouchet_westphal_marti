@@ -38,14 +38,41 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
 	    //slider Gravité
     m_lblGravity = new QLabel("Gravity: 9.81", this);
     m_sliderGravity = new QSlider(Qt::Horizontal, this);
-	// Mapper un slider de 0 à 2500 pour représenter 0.00 à 25.00
+	    // Mapper un slider de 0 à 2500 pour représenter 0.00 à 25.00
     m_sliderGravity->setRange(0, 2500);
-	// Valeur de départ à 9.81 = gravité terrestre
+	    // Valeur de départ à 9.81 = gravité terrestre
     m_sliderGravity->setValue(981);
         
 	    // Ajout des contrôles de physique au layout
     layPhys->addWidget(m_lblGravity);
     layPhys->addWidget(m_sliderGravity);
+
+    // -- Viscosité (Friction) --
+        // Echelle 0-100 pour représenter 0.00 à 1.00
+    m_lblFriction = new QLabel("Viscosity : 0.05", this);
+    m_sliderFriction = new QSlider(Qt::Horizontal, this);
+    m_sliderFriction->setRange(0, 100);
+    m_sliderFriction->setValue(5); // Valeur par défaut 0.05
+    layPhys->addWidget(m_lblFriction);
+    layPhys->addWidget(m_sliderFriction);
+
+    // -- rebond (Rebond) --
+        // Echelle 0-100 pour 0.0 à 1.0
+    m_lblrebond = new QLabel("Bounciness : 0.70", this);
+    m_sliderrebond = new QSlider(Qt::Horizontal, this);
+    m_sliderrebond->setRange(0, 100);
+    m_sliderrebond->setValue(70);
+    layPhys->addWidget(m_lblrebond);
+    layPhys->addWidget(m_sliderrebond);
+
+    // -- Vitesse Initiale --
+        // Echelle 0-200% (Multiplicateur)
+    m_lblSpeed = new QLabel("Initial speed: 100%", this);
+    m_sliderSpeed = new QSlider(Qt::Horizontal, this);
+    m_sliderSpeed->setRange(0, 500); // 0 à 5x
+    m_sliderSpeed->setValue(100);
+    layPhys->addWidget(m_lblSpeed);
+    layPhys->addWidget(m_sliderSpeed);
 
     controlsLayout->addWidget(grpPhys); // On l'ajoute en second
     controlsLayout->addStretch();
@@ -58,18 +85,40 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
 
     // --- Connexions ---
 
-    // Slider Gravité
-    connect(m_sliderGravity, &QSlider::valueChanged, this, &MainWindow::onGravityChanged);
-
-    // Bouton Play/Pause
+        // Bouton Play/Pause
     connect(btnPlay, &QPushButton::clicked, this, [this]() {
         if (m_renderWidget) m_renderWidget->togglePause();
         });
 
-    // Bouton Reset
+        // Bouton Reset
     connect(btnReset, &QPushButton::clicked, this, [this]() {
         if (m_renderWidget) m_renderWidget->reset();
         });
+
+        // Viscosité (Lambda)
+    connect(m_sliderFriction, &QSlider::valueChanged, this, [this](int val) {
+        float f = val / 100.0f;
+        m_lblFriction->setText(QString("Viscosity: %1").arg(f, 0, 'f', 2));
+        if (m_renderWidget) m_renderWidget->setFriction(f);
+        });
+
+        // rebond (Lambda)
+    connect(m_sliderrebond, &QSlider::valueChanged, this, [this](int val) {
+        float r = val / 100.0f;
+        m_lblrebond->setText(QString("Bounciness: %1").arg(r, 0, 'f', 2));
+        if (m_renderWidget) m_renderWidget->setrebond(r);
+        });
+
+        // Vitesse Initiale (Lambda)
+    connect(m_sliderSpeed, &QSlider::valueChanged, this, [this](int val) {
+        m_lblSpeed->setText(QString("Initial speed: %1%").arg(val));
+        // On divise par 10 pour avoir un facteur (ex: 100 -> 10.0f) ou juste val
+        // Ici on envoie le pourcentage directement, on traitera dans RaylibWidget
+        if (m_renderWidget) m_renderWidget->setInitialVelocityScale(val / 100.0f);
+        });
+
+        // Slider Gravité
+    connect(m_sliderGravity, &QSlider::valueChanged, this, &MainWindow::onGravityChanged);
 }
 
 MainWindow::~MainWindow() {}

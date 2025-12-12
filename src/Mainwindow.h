@@ -3,7 +3,7 @@
 #include <QPushButton>
 #include <QSlider>
 #include <QLabel>
-#include "RaylibWidget.h" // <--- AJOUT
+#include "RaylibWidget.h"
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -15,9 +15,21 @@ private slots:
     void onGravityChanged(int value);
 
 private:
-    RaylibWidget* m_renderWidget; // <--- AJOUT
+    RaylibWidget* m_renderWidget;
 
-    // ... vos autres widgets existants
+	// Gravité
     QSlider* m_sliderGravity;
     QLabel* m_lblGravity;
+
+    // Viscosité (Friction)
+    QSlider* m_sliderFriction;
+    QLabel* m_lblFriction;
+
+    // rebond (Rebond)
+    QSlider* m_sliderrebond;
+    QLabel* m_lblrebond;
+
+    // Vitesse Initiale
+    QSlider* m_sliderSpeed;
+    QLabel* m_lblSpeed;
 };

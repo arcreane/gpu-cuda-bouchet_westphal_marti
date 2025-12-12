@@ -2,7 +2,7 @@
 #include <QWidget>
 #include <vector>
 #include <raylib.h>
-#include <chrono> // <--- AJOUT POUR LE TEMPS
+#include <chrono>
 #include "Particle.h"
 
 class RaylibWidget : public QWidget {
@@ -11,14 +11,21 @@ public:
     explicit RaylibWidget(QWidget* parent = nullptr);
     ~RaylibWidget();
 
-    void setGravity(float g);
+    // Commande simulation
     void togglePause();
     void reset();
 
+    // Physique
+    void setGravity(float g);
+    void setFriction(float f);
+    void setrebond(float r);
+    void setInitialVelocityScale(float v);
+
+	
+
 protected:
     void paintEvent(QPaintEvent* event) override;
-
-    // --- NOUVEAU : Gère le redimensionnement ---
+    // --- Redimensionnement ---
     void resizeEvent(QResizeEvent* event) override;
 
 private:
@@ -32,10 +39,15 @@ private:
 
     RenderTexture2D m_renderTexture;
     std::vector<Particle> m_particles;
+
+	// Valeur de base pour la physique
     float m_gravity = 9.81f;
+    float m_friction = 0.05f;
+    float m_rebond = 0.7f;   
+    float m_velocityScale = 1.0f;
     const int PARTICLE_COUNT = 1000;
 
-    // --- NOUVEAU : Variables pour calculer les FPS ---
+    // Variables calcul FPS
     std::chrono::steady_clock::time_point m_lastTime;
     int m_currentFPS = 0;
 };

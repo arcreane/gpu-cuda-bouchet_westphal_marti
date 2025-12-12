@@ -98,10 +98,7 @@ void RaylibWidget::drawToTexture() {
     for (const auto& p : m_particles) {
         DrawCircleV(p.position, p.radius, p.color);
     }
-
-    // --- CORRECTION FPS ---
-    // On affiche notre variable calculée manuellement
-    // FormatText est une fonction Raylib pratique (ou TextFormat selon la version)
+ 
     DrawText(TextFormat("%i FPS", m_currentFPS), 10, 10, 20, GREEN);
 
     if (m_isPaused) {
@@ -152,4 +149,16 @@ void RaylibWidget::resizeEvent(QResizeEvent* event) {
         UnloadRenderTexture(m_renderTexture);
         m_renderTexture = LoadRenderTexture(width(), height());
     }
+}
+
+void RaylibWidget::setFriction(float f) {
+    m_friction = f;
+}
+
+void RaylibWidget::setrebond(float r) {
+    m_rebond = r;
+}
+
+void RaylibWidget::setInitialVelocityScale(float v) {
+    m_velocityScale = v;
 }
