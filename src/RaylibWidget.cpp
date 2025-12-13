@@ -4,6 +4,7 @@
 #include <random>
 #include <QResizeEvent>
 #include <cmath>
+#include "ParticleKernel.h"
 
 RaylibWidget::RaylibWidget(QWidget* parent) : QWidget(parent) {
     // Optimisation : On indique à Qt qu'on dessine tout le fond nous-mêmes
@@ -177,8 +178,16 @@ void RaylibWidget::updatePhysics() {
         }
     }
     else if (m_computeMode == GPU) {
-        // Implémentation GPU à venir
-	}
+        float dt = 1.0f / 60.0f;
+
+        // CORRECTION IMPORTANTE :
+        // On vérifie qu'il y a des particules
+        if (!m_particles.empty()) {
+            // On passe .data() (le tableau brut) et .size() (le nombre)
+            // C'est ce qui connecte correctement votre vecteur C++ au pointeur C du Kernel
+            updateParticlesCUDA(m_particles.data(), m_particles.size(), dt, m_gravity, m_friction, m_rebond, width(), height());
+        }
+    }
 }
 
 void RaylibWidget::drawToTexture() {

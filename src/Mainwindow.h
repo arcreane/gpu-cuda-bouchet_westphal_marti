@@ -6,6 +6,10 @@
 #include "RaylibWidget.h"
 #include <QComboBox>
 
+
+class QComboBox;
+
+
 class MainWindow : public QMainWindow {
     Q_OBJECT
 public:
