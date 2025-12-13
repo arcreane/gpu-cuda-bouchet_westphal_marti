@@ -37,6 +37,8 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     laySim->addWidget(btnReset);
 	laySim->addWidget(m_comboComputeMode);
 
+    controlsLayout->addWidget(grpSim);
+
     // 2. Groupe Interaction Curseur (NOUVEAU)
     QGroupBox* grpCursor = new QGroupBox("Interaction Souris", this);
     QVBoxLayout* layCursor = new QVBoxLayout(grpCursor);

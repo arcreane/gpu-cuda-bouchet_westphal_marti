@@ -207,7 +207,21 @@ void RaylibWidget::updatePhysics() {
         if (!m_particles.empty()) {
             // On passe .data() (le tableau brut) et .size() (le nombre)
             // C'est ce qui connecte correctement votre vecteur C++ au pointeur C du Kernel
-            updateParticlesCUDA(m_particles.data(), m_particles.size(), dt, m_gravity, m_friction, m_rebond, width(), height());
+            updateParticlesCUDA(
+                m_particles.data(),
+                m_particles.size(),
+                dt,
+                m_gravity,
+                m_friction,
+                m_rebond,
+                width(),
+                height(),
+                m_mousePos.x,
+                m_mousePos.y,
+                m_cursorEffectStrength,
+                m_cursorEffectRadius,
+                m_cursorActive
+            );
         }
     }
 }

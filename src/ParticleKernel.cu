@@ -1,23 +1,53 @@
 #include "ParticleKernel.h"
 #include <cuda_runtime.h>
 #include <device_launch_parameters.h>
-#include <cstdio> // Pour printf
+#include <cstdio>
+#include <cmath> // Pour sqrtf
 
-// Macro de vérification d'erreur
 #define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
 inline void gpuAssert(cudaError_t code, const char* file, int line, bool abort = true) {
     if (code != cudaSuccess) {
-        fprintf(stderr, "ERREUR CUDA: %s %s %d\n", cudaGetErrorString(code), file, line);;
+        fprintf(stderr, "ERREUR CUDA: %s %s %d\n", cudaGetErrorString(code), file, line);
     }
 }
 
-__global__ void updateParticlesKernel(Particle* particles, int count, float dt, float gravity, float friction, float rebound, int width, int height) {
+// 1. On ajoute les arguments au Kernel aussi
+__global__ void updateParticlesKernel(Particle* particles, int count, float dt, float gravity, float friction, float rebound, int width, int height,
+    float mouseX, float mouseY, float cursorStrength, float cursorRadius, bool cursorActive) {
+
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i >= count) return;
 
     Particle p = particles[i];
 
-    // --- Physique ---
+    // --- A. INTERACTION SOURIS (Portage du code CPU vers GPU) ---
+    if (cursorActive) {
+        float dx = mouseX - p.position.x;
+        float dy = mouseY - p.position.y;
+
+        // Optimisation : distance au carré pour éviter sqrtf inutile
+        float distSq = dx * dx + dy * dy;
+        float radiusSq = cursorRadius * cursorRadius;
+
+        // Si on est dans le cercle
+        if (distSq < radiusSq && distSq > 1.0f) {
+            float dist = sqrtf(distSq);
+
+            // Normalisation
+            float nx = dx / dist;
+            float ny = dy / dist;
+
+            // Facteur linéaire (1 au centre, 0 au bord)
+            float forceFactor = (1.0f - (dist / cursorRadius));
+
+            // Application de la force
+            p.velocity.x += nx * forceFactor * cursorStrength * 2.0f;
+            p.velocity.y += ny * forceFactor * cursorStrength * 2.0f;
+        }
+    }
+    // ------------------------------------------------------------
+
+    // ---  PHYSIQUE CLASSIQUE ---
     p.velocity.y += gravity * dt * 10.0f;
 
     float damping = 1.0f - (friction * dt * 2.0f);
@@ -28,7 +58,7 @@ __global__ void updateParticlesKernel(Particle* particles, int count, float dt, 
     p.position.x += p.velocity.x;
     p.position.y += p.velocity.y;
 
-    // Collisions Murs
+    // ---  COLLISIONS MURS ---
     if (p.position.y > height - p.radius) {
         p.position.y = height - p.radius;
         p.velocity.y *= -rebound;
@@ -43,34 +73,60 @@ __global__ void updateParticlesKernel(Particle* particles, int count, float dt, 
         if (p.position.x < p.radius) p.position.x = p.radius;
     }
 
+    // ---  COLLISIONS ENTRE PARTICULES ---
+    for (int j = 0; j < count; j++) {
+        if (i == j) continue;
+        Particle other = particles[j];
+        float dx = p.position.x - other.position.x;
+        float dy = p.position.y - other.position.y;
+        float distSq = dx * dx + dy * dy;
+        float minDist = p.radius + other.radius;
+
+        if (distSq < minDist * minDist && distSq > 0.0001f) {
+            float dist = sqrtf(distSq);
+            float nx = dx / dist;
+            float ny = dy / dist;
+            float overlap = minDist - dist;
+
+            p.position.x += nx * overlap * 0.5f;
+            p.position.y += ny * overlap * 0.5f;
+
+            float dvx = p.velocity.x - other.velocity.x;
+            float dvy = p.velocity.y - other.velocity.y;
+            float dot = dvx * nx + dvy * ny;
+
+            if (dot < 0) {
+                float impulse = -(1.0f + rebound) * dot * 0.5f;
+                p.velocity.x += impulse * nx;
+                p.velocity.y += impulse * ny;
+            }
+        }
+    }
+
     particles[i] = p;
 }
 
-// Wrapper corrigé
-void updateParticlesCUDA(Particle* particles, int count, float dt, float gravity, float friction, float rebound, int width, int height) {
+// Wrapper C++ mis à jour
+void updateParticlesCUDA(Particle* particles, int count, float dt, float gravity, float friction, float rebound, int width, int height,
+    float mouseX, float mouseY, float cursorStrength, float cursorRadius, bool cursorActive) {
+
     Particle* d_particles = nullptr;
     size_t size = count * sizeof(Particle);
 
-    // 1. Allocation
     gpuErrchk(cudaMalloc(&d_particles, size));
-
-    // 2. Copie CPU -> GPU
     gpuErrchk(cudaMemcpy(d_particles, particles, size, cudaMemcpyHostToDevice));
 
-    // 3. Config
     int threadsPerBlock = 256;
     int blocksPerGrid = (count + threadsPerBlock - 1) / threadsPerBlock;
 
-    // 4. Lancement (ATTENTION : <<< et >>> doivent être collés, sans espace !)
-    updateParticlesKernel <<<blocksPerGrid, threadsPerBlock>>> (d_particles, count, dt, gravity, friction, rebound, width, height);
+    // On passe TOUS les nouveaux arguments au Kernel
+    updateParticlesKernel << <blocksPerGrid, threadsPerBlock >> > (
+        d_particles, count, dt, gravity, friction, rebound, width, height,
+        mouseX, mouseY, cursorStrength, cursorRadius, cursorActive
+        );
 
-    // Vérification immédiate du lancement
     gpuErrchk(cudaPeekAtLastError());
     gpuErrchk(cudaDeviceSynchronize());
-
-    // 5. Retour GPU -> CPU
     gpuErrchk(cudaMemcpy(particles, d_particles, size, cudaMemcpyDeviceToHost));
-
-    // 6. Ménage
     gpuErrchk(cudaFree(d_particles));
 }
