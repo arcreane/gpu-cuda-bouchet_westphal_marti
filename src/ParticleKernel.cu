@@ -11,7 +11,7 @@ inline void gpuAssert(cudaError_t code, const char* file, int line, bool abort =
     }
 }
 
-// 1. On ajoute les arguments au Kernel aussi
+// Kernel CUDA mis à jour avec interaction souris
 __global__ void updateParticlesKernel(Particle* particles, int count, float dt, float gravity, float friction, float rebound, int width, int height,
     float mouseX, float mouseY, float cursorStrength, float cursorRadius, bool cursorActive) {
 
@@ -20,12 +20,12 @@ __global__ void updateParticlesKernel(Particle* particles, int count, float dt, 
 
     Particle p = particles[i];
 
-    // --- A. INTERACTION SOURIS (Portage du code CPU vers GPU) ---
+    // INTERACTION SOURIS (Portage du code CPU vers GPU
     if (cursorActive) {
         float dx = mouseX - p.position.x;
         float dy = mouseY - p.position.y;
 
-        // Optimisation : distance au carré pour éviter sqrtf inutile
+        // distance au carré pour éviter sqrtf inutile
         float distSq = dx * dx + dy * dy;
         float radiusSq = cursorRadius * cursorRadius;
 
@@ -45,16 +45,18 @@ __global__ void updateParticlesKernel(Particle* particles, int count, float dt, 
             p.velocity.y += ny * forceFactor * cursorStrength * 2.0f;
         }
     }
-    // ------------------------------------------------------------
 
     // ---  PHYSIQUE CLASSIQUE ---
+	// Gravité
     p.velocity.y += gravity * dt * 10.0f;
 
+	// Friction
     float damping = 1.0f - (friction * dt * 2.0f);
     if (damping < 0) damping = 0;
     p.velocity.x *= damping;
     p.velocity.y *= damping;
 
+	// Mise à jour position
     p.position.x += p.velocity.x;
     p.position.y += p.velocity.y;
 
@@ -106,7 +108,7 @@ __global__ void updateParticlesKernel(Particle* particles, int count, float dt, 
     particles[i] = p;
 }
 
-// Wrapper C++ mis à jour
+// Wrapper mis à jour
 void updateParticlesCUDA(Particle* particles, int count, float dt, float gravity, float friction, float rebound, int width, int height,
     float mouseX, float mouseY, float cursorStrength, float cursorRadius, bool cursorActive) {
 

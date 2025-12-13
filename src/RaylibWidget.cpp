@@ -140,8 +140,8 @@ void RaylibWidget::updatePhysics() {
         }
 
         // --- B. BOUCLE DE COLLISION INTER-PARTICULES (Naïve O(N^2)) ---
-        // Note : C'est très lourd pour le CPU. C'est là que CUDA brillera plus tard.
-        if (m_particles.size() > 2000) return; // On évite de faire ça si trop de particules
+        // Note : C'est très lourd pour le CPU.
+		if (m_particles.size() > 2000) return; // On évite les collisions si trop de particules
         for (size_t i = 0; i < m_particles.size(); i++) {
             for (size_t j = i + 1; j < m_particles.size(); j++) {
                 Particle& p1 = m_particles[i];
@@ -202,10 +202,8 @@ void RaylibWidget::updatePhysics() {
     else if (m_computeMode == GPU) {
         float dt = 1.0f / 60.0f;
 
-        // CORRECTION IMPORTANTE :
         // On vérifie qu'il y a des particules
         if (!m_particles.empty()) {
-            // On passe .data() (le tableau brut) et .size() (le nombre)
             // C'est ce qui connecte correctement votre vecteur C++ au pointeur C du Kernel
             updateParticlesCUDA(
                 m_particles.data(),
@@ -242,12 +240,13 @@ void RaylibWidget::drawToTexture() {
         // Contour blanc
         DrawCircleLines((int)m_mousePos.x, (int)m_mousePos.y, m_cursorEffectRadius, RAYWHITE);
     }
-    // -----------------------------
-
+ 
+	// Dessin des particules
     for (const auto& p : m_particles) {
         DrawCircleV(p.position, p.radius, p.color);
     }
 
+	// Affichage FPS et Count
     DrawText(TextFormat("%i FPS", m_currentFPS), 10, 10, 20, GREEN);
     DrawText(TextFormat("Count: %i", (int)m_particles.size()), 10, 30, 20, LIGHTGRAY);
 
@@ -258,6 +257,7 @@ void RaylibWidget::drawToTexture() {
     EndTextureMode();
 }
 
+// Boucle de rendu principale
 void RaylibWidget::paintEvent(QPaintEvent*) {
     if (!m_isInitialized) {
         initRaylib();
@@ -287,6 +287,7 @@ void RaylibWidget::paintEvent(QPaintEvent*) {
     update();
 }
 
+// Gestion du redimensionnement
 void RaylibWidget::resizeEvent(QResizeEvent* event) {
     QWidget::resizeEvent(event);
     if (m_isInitialized) {
@@ -295,11 +296,14 @@ void RaylibWidget::resizeEvent(QResizeEvent* event) {
     }
 }
 
+// --- GESTION PHYSIQUE ---
+    // Ajuste la taille des particules
 void RaylibWidget::setParticleSize(float s) {
     m_particleRadius = s;
     for (auto& p : m_particles) p.radius = m_particleRadius;
 }
 
+    // Ajuste le nombre de particules
 void RaylibWidget::setParticleCount(int count) {
     m_targetCount = count;
     int currentSize = (int)m_particles.size();
@@ -321,9 +325,11 @@ void RaylibWidget::setParticleCount(int count) {
     }
 }
 
+    // Réglages physiques globaux 
 void RaylibWidget::setFriction(float f) { m_friction = f; }
 void RaylibWidget::setrebond(float r) { m_rebond = r; }
 
+    // Ajuste l'échelle de la vitesse initiale des particules
 void RaylibWidget::setInitialVelocityScale(float v) {
     if (m_velocityScale <= 0.0001f) {
         m_velocityScale = v;
@@ -337,9 +343,8 @@ void RaylibWidget::setInitialVelocityScale(float v) {
     }
 }
 
+// Sélection du mode de calcul (CPU / GPU)
 void RaylibWidget::setComputeMode(ComputeMode mode) {
     m_computeMode = mode;
-    // Optionnel : On peut reset la simulation quand on change de moteur
-    // pour éviter des conflits de mémoire plus tard.
     reset();
 }

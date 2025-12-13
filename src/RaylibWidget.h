@@ -31,7 +31,7 @@ public:
     void setParticleSize(float s);
     void setParticleCount(int count);
 
-    // --- NOUVEAU : Interaction Curseur ---
+    // Interaction Curseur
     void setCursorActive(bool active);
     void setCursorRadius(float radius);
     void setCursorStrength(float strength);
@@ -40,7 +40,7 @@ protected:
     void paintEvent(QPaintEvent* event) override;
     void resizeEvent(QResizeEvent* event) override;
 
-    // --- NOUVEAU : Capture de la souris ---
+    // Capture de la souris
     void mouseMoveEvent(QMouseEvent* event) override;
 
 private:

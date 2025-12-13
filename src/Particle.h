@@ -1,5 +1,5 @@
 #pragma once
-#include <raylib.h> // Pour Vector2 et Color
+#include <raylib.h>
 
 struct Particle {
     Vector2 position;

@@ -16,7 +16,7 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
 
     // --- Colonne de Gauche : Contrôles ---
     QWidget* controlsWidget = new QWidget(this);
-    controlsWidget->setFixedWidth(320); // Un peu plus large pour les nouveaux contrôles
+    controlsWidget->setFixedWidth(320);
     QVBoxLayout* controlsLayout = new QVBoxLayout(controlsWidget);
 
     // Groupe Simulation
@@ -39,15 +39,15 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
 
     controlsLayout->addWidget(grpSim);
 
-    // 2. Groupe Interaction Curseur (NOUVEAU)
+    // Groupe Interaction Curseur
     QGroupBox* grpCursor = new QGroupBox("Interaction Souris", this);
     QVBoxLayout* layCursor = new QVBoxLayout(grpCursor);
 
-    // Activation
+        // Activation
     m_chkCursorActive = new QCheckBox("Activer l'effet", this);
     layCursor->addWidget(m_chkCursorActive);
 
-    // Force (Négatif = Repousse, Positif = Attire)
+        // Force (Négatif = Repousse, Positif = Attire)
     m_lblCursorStrength = new QLabel("Force: 0 (Neutre)", this);
     m_sliderCursorStrength = new QSlider(Qt::Horizontal, this);
     m_sliderCursorStrength->setRange(-200, 200);
@@ -55,7 +55,7 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     layCursor->addWidget(m_lblCursorStrength);
     layCursor->addWidget(m_sliderCursorStrength);
 
-    // Rayon
+        // Rayon
     m_lblCursorRadius = new QLabel("Rayon: 150 px", this);
     m_sliderCursorRadius = new QSlider(Qt::Horizontal, this);
     m_sliderCursorRadius->setRange(50, 600);
@@ -66,10 +66,11 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     controlsLayout->addWidget(grpCursor);
 
 
-    // 3. Groupe Physique
+    // Groupe Physique
     QGroupBox* grpPhys = new QGroupBox("Physique et Paramètres", this);
     QVBoxLayout* layPhys = new QVBoxLayout(grpPhys);
 
+	    // Nombre de Particules
     m_lblCount = new QLabel("Count: 1000", this);
     m_sliderCount = new QSlider(Qt::Horizontal, this);
     m_sliderCount->setRange(0, 10000);
@@ -77,6 +78,7 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     layPhys->addWidget(m_lblCount);
     layPhys->addWidget(m_sliderCount);
 
+	    // Taille des Particules
     m_lblSize = new QLabel("Size: 3.0", this);
     m_sliderSize = new QSlider(Qt::Horizontal, this);
     m_sliderSize->setRange(10, 100);
@@ -84,6 +86,7 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     layPhys->addWidget(m_lblSize);
     layPhys->addWidget(m_sliderSize);
 
+	    // Gravité
     m_lblGravity = new QLabel("Gravity: 9.81", this);
     m_sliderGravity = new QSlider(Qt::Horizontal, this);
     m_sliderGravity->setRange(0, 2500);
@@ -91,6 +94,7 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     layPhys->addWidget(m_lblGravity);
     layPhys->addWidget(m_sliderGravity);
 
+	    // Viscosité
     m_lblFriction = new QLabel("Viscosity : 0.05", this);
     m_sliderFriction = new QSlider(Qt::Horizontal, this);
     m_sliderFriction->setRange(0, 100);
@@ -98,6 +102,7 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     layPhys->addWidget(m_lblFriction);
     layPhys->addWidget(m_sliderFriction);
 
+	    // Rebond
     m_lblrebond = new QLabel("Bounciness : 0.70", this);
     m_sliderrebond = new QSlider(Qt::Horizontal, this);
     m_sliderrebond->setRange(0, 100);
@@ -105,6 +110,7 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     layPhys->addWidget(m_lblrebond);
     layPhys->addWidget(m_sliderrebond);
 
+	    // Vitesse Initiale
     m_lblSpeed = new QLabel("Initial speed: 100%", this);
     m_sliderSpeed = new QSlider(Qt::Horizontal, this);
     m_sliderSpeed->setRange(0, 500);
@@ -112,10 +118,11 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     layPhys->addWidget(m_lblSpeed);
     layPhys->addWidget(m_sliderSpeed);
 
+	    // Ajout du groupe Physique au layout principal des contrôles
     controlsLayout->addWidget(grpPhys);
     controlsLayout->addStretch();
 
-    // --- Fenêtre de rendu Raylib ---
+    // Fenêtre de rendu Raylib
     m_renderWidget = new RaylibWidget(this);
     mainLayout->addWidget(controlsWidget);
     mainLayout->addWidget(m_renderWidget);
@@ -133,11 +140,12 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
         if (m_renderWidget) m_renderWidget->reset();
         });
 
-    // --- NOUVEAU : Connexions Curseur ---
+    // Curseur
     connect(m_chkCursorActive, &QCheckBox::toggled, this, [this](bool checked) {
         if (m_renderWidget) m_renderWidget->setCursorActive(checked);
         });
 
+	// Force du curseur
     connect(m_sliderCursorStrength, &QSlider::valueChanged, this, [this](int val) {
         // Val est entre -200 et 200. On divise par 50.0 pour avoir une force entre -4.0 et +4.0
         float strength = val / 50.0f;
@@ -152,14 +160,14 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
         if (m_renderWidget) m_renderWidget->setCursorStrength(strength);
         });
 
+	// Rayon du curseur
     connect(m_sliderCursorRadius, &QSlider::valueChanged, this, [this](int val) {
         m_lblCursorRadius->setText(QString("Rayon: %1 px").arg(val));
         if (m_renderWidget) m_renderWidget->setCursorRadius((float)val);
         });
-    // ------------------------------------
 
 
-	    // ComboBox Mode de calcul CPU / GPU (Lambda)
+	// Mode de calcul CPU / GPU
     connect(m_comboComputeMode, &QComboBox::currentIndexChanged, this, [this](int index) {
         if (m_renderWidget) {
             // Index 0 = CPU, Index 1 = GPU
@@ -170,40 +178,47 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
         }
         });
 
-        // Viscosité (Lambda)
+	// Physique Globale
     connect(m_sliderFriction, &QSlider::valueChanged, this, [this](int val) {
         float f = val / 100.0f;
         m_lblFriction->setText(QString("Viscosity: %1").arg(f, 0, 'f', 2));
         if (m_renderWidget) m_renderWidget->setFriction(f);
         });
 
+	// Rebond
     connect(m_sliderrebond, &QSlider::valueChanged, this, [this](int val) {
         float r = val / 100.0f;
         m_lblrebond->setText(QString("Bounciness: %1").arg(r, 0, 'f', 2));
         if (m_renderWidget) m_renderWidget->setrebond(r);
         });
 
+	// Vitesse Initiale
     connect(m_sliderSpeed, &QSlider::valueChanged, this, [this](int val) {
         m_lblSpeed->setText(QString("Initial speed: %1%").arg(val));
         if (m_renderWidget) m_renderWidget->setInitialVelocityScale(val / 100.0f);
         });
 
+	// Gravité
     connect(m_sliderGravity, &QSlider::valueChanged, this, &MainWindow::onGravityChanged);
 
+	// Taille des Particules
     connect(m_sliderSize, &QSlider::valueChanged, this, [this](int val) {
         float s = val / 10.0f;
         m_lblSize->setText(QString("Size: %1").arg(s, 0, 'f', 1));
         if (m_renderWidget) m_renderWidget->setParticleSize(s);
         });
 
+	// Nombre de Particules
     connect(m_sliderCount, &QSlider::valueChanged, this, [this](int val) {
         m_lblCount->setText(QString("Count: %1").arg(val));
         if (m_renderWidget) m_renderWidget->setParticleCount(val);
         });
 }
 
+// Destructeur
 MainWindow::~MainWindow() {}
 
+// Slot appelé lorsque la gravité change
 void MainWindow::onGravityChanged(int value) {
     float g = value / 100.0f;
     m_lblGravity->setText(QString("Gravity: %1").arg(g, 0, 'f', 2));
