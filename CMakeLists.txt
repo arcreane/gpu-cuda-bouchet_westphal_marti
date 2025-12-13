@@ -23,9 +23,11 @@ set(CMAKE_CUDA_ARCHITECTURES "native")
 
 add_compile_definitions(NOMINMAX)
 
+# --- Dépendances ---
 find_package(Qt6 COMPONENTS Widgets REQUIRED)
 find_package(CUDAToolkit REQUIRED)
 
+# Raylib via FetchContent
 include(FetchContent)
 FetchContent_Declare(
     raylib
@@ -50,6 +52,7 @@ set(CMAKE_AUTORCC ON)
 
 add_executable(${PROJECT_NAME} ${PROJECT_SOURCES} "src/Particle.h")
 
+# --- Édition de liens (Link) ---
 target_link_libraries(${PROJECT_NAME} PRIVATE 
     Qt6::Widgets 
     raylib

@@ -3,6 +3,7 @@
 #include <QPushButton>
 #include <QSlider>
 #include <QLabel>
+#include <QCheckBox> // <--- Ajouté
 #include "RaylibWidget.h"
 #include <QComboBox>
 
@@ -29,23 +30,27 @@ private:
     QSlider* m_sliderGravity;
     QLabel* m_lblGravity;
 
-    // Viscosité (Friction)
     QSlider* m_sliderFriction;
     QLabel* m_lblFriction;
 
-    // rebond (Rebond)
     QSlider* m_sliderrebond;
     QLabel* m_lblrebond;
 
-    // Vitesse Initiale
     QSlider* m_sliderSpeed;
     QLabel* m_lblSpeed;
 
-    // Taille des particules
     QSlider* m_sliderSize;
     QLabel* m_lblSize;
 
-    // Nombre de particules
     QSlider* m_sliderCount;
     QLabel* m_lblCount;
+
+    // --- Interaction Curseur (NOUVEAU) ---
+    QCheckBox* m_chkCursorActive;
+
+    QSlider* m_sliderCursorStrength;
+    QLabel* m_lblCursorStrength;
+
+    QSlider* m_sliderCursorRadius;
+    QLabel* m_lblCursorRadius;
 };
